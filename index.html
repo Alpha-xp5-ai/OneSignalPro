@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OneSignalPro — FAB Submission Page</title>
+  <style>
+    :root {
+      --accent:   #e8423a;
+      --accent2:  #ff6b35;
+      --dark:     #0d0d0d;
+      --card:     #161616;
+      --card2:    #1e1e1e;
+      --border:   #2a2a2a;
+      --text:     #e8e8e8;
+      --muted:    #888;
+      --green:    #4ade80;
+      --blue:     #60a5fa;
+      --yellow:   #facc15;
+      --purple:   #a78bfa;
+      --radius:   10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    a { color: var(--accent2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Layout ── */
+    .page { max-width: 960px; margin: 0 auto; padding: 0 24px 80px; }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #1a0a09 0%, #0d0d0d 60%);
+      border-bottom: 1px solid var(--border);
+      padding: 60px 24px 50px;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(32px, 6vw, 54px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      font-size: 17px;
+      color: #bbb;
+      max-width: 620px;
+      margin: 0 auto 28px;
+    }
+    .hero-meta {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .hero-meta span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .dot-green  { background: var(--green); }
+    .dot-blue   { background: var(--blue); }
+    .dot-yellow { background: var(--yellow); }
+    .dot-purple { background: var(--purple); }
+
+    /* ── Section ── */
+    section { margin-top: 56px; }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    h2 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      letter-spacing: -0.4px;
+    }
+    h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+    p { color: #bbb; margin-bottom: 12px; }
+
+    /* ── Cards grid ── */
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+    .card-icon {
+      font-size: 26px;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .card p { font-size: 13px; color: var(--muted); margin: 0; }
+
+    /* ── Feature list ── */
+    .feature-list { list-style: none; display: grid; gap: 10px; }
+    .feature-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      color: #ccc;
+    }
+    .feature-list li::before {
+      content: '✓';
+      color: var(--green);
+      font-weight: 700;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+
+    /* ── Platform badges ── */
+    .platform-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+    .platform-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 14px;
+    }
+    .platform-badge .status {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .status-full    { background: rgba(74,222,128,.15); color: var(--green); }
+    .status-stub    { background: rgba(96,165,250,.12); color: var(--blue); }
+
+    /* ── API table ── */
+    .api-table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+    thead th {
+      background: var(--card2);
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr { border-bottom: 1px solid #1e1e1e; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody td { padding: 10px 14px; color: #ccc; vertical-align: top; }
+    tbody td:first-child { color: var(--blue); font-family: 'Consolas', 'Courier New', monospace; }
+    .tag-cat {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(167,139,250,.12);
+      color: var(--purple);
+    }
+    .tag-pure {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(250,204,21,.1);
+      color: var(--yellow);
+      margin-left: 4px;
+    }
+
+    /* ── Code block ── */
+    pre {
+      background: #0a0a0a;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      overflow-x: auto;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #d4d4d4;
+    }
+    .kw   { color: #c586c0; }
+    .str  { color: #ce9178; }
+    .cmt  { color: #608b4e; }
+    .fn   { color: #dcdcaa; }
+    .num  { color: #b5cea8; }
+    .cls  { color: #4ec9b0; }
+
+    /* ── Steps ── */
+    .steps { display: grid; gap: 16px; }
+    .step {
+      display: flex;
+      gap: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 800;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .step-body h3 { margin-bottom: 4px; font-size: 15px; }
+    .step-body p  { font-size: 13px; color: var(--muted); margin: 0; }
+
+    /* ── Inline code ── */
+    code {
+      background: #1e1e1e;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 12.5px;
+      color: #ce9178;
+    }
+
+    /* ── Architecture diagram ── */
+    .arch {
+      background: #0a0a0a;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 2;
+      color: #ccc;
+      overflow-x: auto;
+    }
+    .arch-blue   { color: var(--blue); }
+    .arch-green  { color: var(--green); }
+    .arch-purple { color: var(--purple); }
+    .arch-yellow { color: var(--yellow); }
+    .arch-red    { color: var(--accent); }
+    .arch-muted  { color: #555; }
+
+    /* ── Delegate cards ── */
+    .delegate-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 12px;
+    }
+    .delegate-card h3 { font-family: 'Consolas', 'Courier New', monospace; color: var(--blue); margin-bottom: 6px; }
+    .delegate-card p  { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    .param-list { list-style: none; display: grid; gap: 4px; }
+    .param-list li { font-size: 12.5px; color: #aaa; display: flex; gap: 8px; }
+    .param-list li .pname { color: var(--yellow); font-family: monospace; }
+    .param-list li .ptype { color: var(--purple); font-family: monospace; }
+
+    /* ── Requirements box ── */
+    .req-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .req-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .req-row:last-child { border-bottom: none; }
+    .req-row .label { color: var(--muted); }
+    .req-row .value { color: var(--text); font-weight: 500; }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 80px;
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    footer strong { color: var(--text); }
+
+    /* ── Notice box ── */
+    .notice {
+      background: rgba(96,165,250,.07);
+      border: 1px solid rgba(96,165,250,.2);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      font-size: 13.5px;
+      color: #bbb;
+      margin-top: 16px;
+    }
+    .notice strong { color: var(--blue); }
+
+    /* ── Flow diagram ── */
+    .flow {
+      background: #0a0a0a;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      font-size: 13px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      line-height: 2;
+      overflow-x: auto;
+    }
+    .arrow { color: #555; }
+
+    @media (max-width: 600px) {
+      .hero { padding: 40px 16px 36px; }
+      .step { flex-direction: column; }
+      .req-row { flex-direction: column; gap: 2px; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ HERO -->
+<div class="hero">
+  <div class="hero-badge">FAB — Epic Games Marketplace</div>
+  <h1>OneSignal<span>Pro</span></h1>
+  <p>Production-ready push notification integration for Unreal Engine 4. Full Blueprint support, zero boilerplate for Android &amp; iOS.</p>
+  <div class="hero-meta">
+    <span><span class="dot dot-green"></span> Version 1.0.0</span>
+    <span><span class="dot dot-blue"></span> UE 4.27+</span>
+    <span><span class="dot dot-yellow"></span> Android · iOS</span>
+    <span><span class="dot dot-purple"></span> Blueprint Ready</span>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- ═══════════════════════════════════════════ OVERVIEW -->
+  <section>
+    <div class="section-label">Overview</div>
+    <h2>What is OneSignalPro?</h2>
+    <p>
+      OneSignalPro is a production-grade Unreal Engine 4 plugin that brings <strong>OneSignal</strong> push notification
+      services directly into your mobile game. It handles all the platform complexity — Android JNI bridges, iOS
+      Objective-C wrappers, Gradle dependencies, CocoaPods, and manifest permissions — so you can focus entirely on
+      your game logic.
+    </p>
+    <p>
+      The plugin exposes a clean, consistent Blueprint API. Everything works from Blueprints with no C++ required.
+      For teams that do write C++, a full subsystem and interface layer is available.
+    </p>
+
+    <div class="grid-2" style="margin-top:24px;">
+      <div class="card">
+        <span class="card-icon">📱</span>
+        <h3>Mobile First</h3>
+        <p>Full implementation for Android (SDK 4.x) and iOS (SDK 3.x). Compiles cleanly on Win64, Mac, and Linux as a null stub.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🔵</span>
+        <h3>Blueprint Native</h3>
+        <p>Every feature — initialize, tags, user identity, subscription, events — is exposed as Blueprint nodes with friendly display names.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">⚡</span>
+        <h3>Zero Code Setup</h3>
+        <p>Set your App ID in Project Settings → Plugins → OneSignal, enable Auto-Initialize, and the SDK starts automatically — no Blueprint nodes required.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🔒</span>
+        <h3>Safe &amp; Stable</h3>
+        <p>All callbacks are dispatched to the game thread. Guards prevent calls before initialization. LoadingPhase = PreLoadingScreen for earliest init.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ FEATURES -->
+  <section>
+    <div class="section-label">Features</div>
+    <h2>Complete Feature List</h2>
+    <div class="grid-2">
+      <div>
+        <h3>Core Notifications</h3>
+        <ul class="feature-list">
+          <li>Initialize OneSignal with App ID</li>
+          <li>Auto-initialize on game start (zero code)</li>
+          <li>Receive foreground push notifications</li>
+          <li>Handle notification-opened events (user tap)</li>
+          <li>Player ID received callback</li>
+          <li>Enable / disable push subscription per device</li>
+          <li>Prompt for push permissions (iOS OS dialog)</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Device Segmentation (Tags)</h3>
+        <ul class="feature-list">
+          <li>Send a single key/value tag</li>
+          <li>Send multiple tags in one call (TMap)</li>
+          <li>Delete a tag by key</li>
+          <li>Link device to your backend user (External User ID)</li>
+          <li>Remove External User ID</li>
+          <li>Retrieve OneSignal Player ID at any time</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Blueprint Events (Delegates)</h3>
+        <ul class="feature-list">
+          <li><code>OnNotificationReceived</code> — foreground notifications</li>
+          <li><code>OnNotificationOpened</code> — user tapped notification</li>
+          <li><code>OnPlayerIdReceived</code> — device ID available</li>
+          <li>All events fire on the game thread (safe for UObjects)</li>
+          <li>Bind/unbind at runtime from any Blueprint</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Developer Experience</h3>
+        <ul class="feature-list">
+          <li>Project Settings UI (UDeveloperSettings)</li>
+          <li>Verbose debug logging toggle</li>
+          <li>Dedicated log category: <code>LogOneSignal</code></li>
+          <li>No engine source modifications</li>
+          <li>Compatible with packaged Shipping builds</li>
+          <li>Works in Editor without platform SDK</li>
+          <li>Subsystem auto-created/destroyed with Game Instance</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ PLATFORM SUPPORT -->
+  <section>
+    <div class="section-label">Platform Support</div>
+    <h2>Supported Platforms</h2>
+    <div class="platform-grid">
+      <div class="platform-badge">
+        🤖 Android
+        <span class="status status-full">Full — SDK 4.x</span>
+      </div>
+      <div class="platform-badge">
+        🍎 iOS
+        <span class="status status-full">Full — SDK 3.x</span>
+      </div>
+      <div class="platform-badge">
+        🪟 Win64
+        <span class="status status-stub">Compiles (null stub)</span>
+      </div>
+      <div class="platform-badge">
+        🍏 Mac
+        <span class="status status-stub">Compiles (null stub)</span>
+      </div>
+      <div class="platform-badge">
+        🐧 Linux
+        <span class="status status-stub">Compiles (null stub)</span>
+      </div>
+    </div>
+    <div class="notice">
+      <strong>Note:</strong> The plugin compiles cleanly on desktop platforms (Win64, Mac, Linux) using a null stub.
+      All push notification APIs are no-ops on non-mobile platforms, which allows the plugin to be active in the Editor
+      without errors or crashes.
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ ARCHITECTURE -->
+  <section>
+    <div class="section-label">Architecture</div>
+    <h2>How It's Built</h2>
+
+    <div class="arch">
+<span class="arch-muted">  Blueprint / C++ user code</span>
+<span class="arch-muted">          │</span>
+<span class="arch-muted">          ▼</span>
+<span class="arch-blue">  UOneSignalProBPLibrary</span>      <span class="arch-muted">← thin static Blueprint wrappers (stateless)</span>
+<span class="arch-muted">          │</span>
+<span class="arch-muted">          ▼</span>
+<span class="arch-green">  UOneSignalManager</span>           <span class="arch-muted">← UGameInstanceSubsystem (owns state + delegates)</span>
+<span class="arch-muted">          │</span>
+<span class="arch-muted">          ▼</span>
+<span class="arch-purple">  IOneSignalPlatform</span>          <span class="arch-muted">← abstract C++ interface</span>
+<span class="arch-muted">     ┌────┴──────────────────┐─────────────────┐</span>
+<span class="arch-muted">     ▼                     ▼                 ▼</span>
+<span class="arch-yellow">  FOneSignalAndroid</span>  <span class="arch-yellow">FOneSignalIOS</span>  <span class="arch-blue">FOneSignalDefault</span>
+<span class="arch-muted">   (JNI bridge)      (Obj-C++ bridge)   (null stub)</span>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px;">
+      <div class="card">
+        <h3>Android Data Flow</h3>
+        <div class="flow">
+OneSignal Cloud <span class="arrow">→</span> FCM <span class="arrow">→</span> Android OS
+         <span class="arrow">↓</span>
+Java foreground handler (GameActivity)
+         <span class="arrow">↓</span>  nativeOnNotificationReceived()
+AsyncTask <span class="arrow">→</span> GameThread
+         <span class="arrow">↓</span>
+FOneSignalAndroid::OnJavaNotificationReceived()
+         <span class="arrow">↓</span>
+UOneSignalManager::HandleNotificationReceived()
+         <span class="arrow">↓</span>
+OnNotificationReceived (Blueprint event)
+        </div>
+      </div>
+      <div class="card">
+        <h3>iOS Data Flow</h3>
+        <div class="flow">
+OneSignal Cloud <span class="arrow">→</span> APNs <span class="arrow">→</span> iOS OS
+         <span class="arrow">↓</span>
+OneSignal SDK handler (CocoaPod 3.x)
+         <span class="arrow">↓</span>  dispatch_get_main_queue()
+Obj-C++ OSNotificationOpenedResult handler
+         <span class="arrow">↓</span>
+AsyncTask <span class="arrow">→</span> GameThread
+         <span class="arrow">↓</span>
+UOneSignalManager::HandleNotificationOpened()
+         <span class="arrow">↓</span>
+OnNotificationOpened (Blueprint event)
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ BLUEPRINT API -->
+  <section>
+    <div class="section-label">Blueprint API</div>
+    <h2>Blueprint Function Reference</h2>
+
+    <div class="api-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Function Name</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Inputs</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Initialize OneSignal</td>
+            <td><span class="tag-cat">OneSignal</span></td>
+            <td>Start the OneSignal SDK with your App ID. Not needed if Auto-Initialize is on.</td>
+            <td><code>AppId</code>, <code>bEnableDebug</code></td>
+          </tr>
+          <tr>
+            <td>Get OneSignal Manager</td>
+            <td><span class="tag-cat">OneSignal</span></td>
+            <td>Returns the subsystem instance. Use this to bind events.</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Is Initialized</td>
+            <td><span class="tag-cat">OneSignal</span> <span class="tag-pure">Pure</span></td>
+            <td>Returns true after a successful Initialize call.</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Get Player ID</td>
+            <td><span class="tag-cat">OneSignal|User</span> <span class="tag-pure">Pure</span></td>
+            <td>Returns the OneSignal device Player ID. Empty string if not yet available.</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Send Tag</td>
+            <td><span class="tag-cat">OneSignal|Tags</span></td>
+            <td>Tag this device with a single key/value pair for segmentation.</td>
+            <td><code>Key</code>, <code>Value</code></td>
+          </tr>
+          <tr>
+            <td>Send Tags</td>
+            <td><span class="tag-cat">OneSignal|Tags</span></td>
+            <td>Send multiple key/value tags in a single call.</td>
+            <td><code>Tags</code> (TMap)</td>
+          </tr>
+          <tr>
+            <td>Delete Tag</td>
+            <td><span class="tag-cat">OneSignal|Tags</span></td>
+            <td>Remove a previously sent tag by key.</td>
+            <td><code>Key</code></td>
+          </tr>
+          <tr>
+            <td>Set External User ID</td>
+            <td><span class="tag-cat">OneSignal|User</span></td>
+            <td>Link this device to your own backend user identifier.</td>
+            <td><code>ExternalId</code></td>
+          </tr>
+          <tr>
+            <td>Remove External User ID</td>
+            <td><span class="tag-cat">OneSignal|User</span></td>
+            <td>Clear the external user ID from this device.</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Prompt For Push Permissions</td>
+            <td><span class="tag-cat">OneSignal|Permissions</span></td>
+            <td>Show the OS push-permission dialog. Required on iOS. No-op on Android.</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Set Subscription</td>
+            <td><span class="tag-cat">OneSignal|Subscription</span></td>
+            <td>Enable or disable push notification delivery for this device.</td>
+            <td><code>bSubscribed</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ EVENTS/DELEGATES -->
+  <section>
+    <div class="section-label">Events</div>
+    <h2>Blueprint Assignable Events</h2>
+    <p>Bind these in Blueprint via <strong>Get OneSignal Manager → Assign Event</strong>.</p>
+
+    <div class="delegate-card">
+      <h3>OnNotificationReceived</h3>
+      <p>Fired when a push notification arrives while the app is in the <strong>foreground</strong>.</p>
+      <ul class="param-list">
+        <li><span class="pname">Notification</span> <span class="ptype">FOneSignalNotification</span> — the notification data</li>
+      </ul>
+    </div>
+
+    <div class="delegate-card">
+      <h3>OnNotificationOpened</h3>
+      <p>Fired when the user <strong>taps a push notification</strong> to open the app (background/killed state).</p>
+      <ul class="param-list">
+        <li><span class="pname">Action</span> <span class="ptype">FOneSignalNotificationAction</span> — contains Notification + ActionId</li>
+      </ul>
+    </div>
+
+    <div class="delegate-card">
+      <h3>OnPlayerIdReceived</h3>
+      <p>Fired once the OneSignal <strong>Player ID</strong> becomes available after initialization completes.</p>
+      <ul class="param-list">
+        <li><span class="pname">PlayerId</span> <span class="ptype">FString</span> — the OneSignal device identifier</li>
+      </ul>
+    </div>
+
+    <h3 style="margin-top:24px; margin-bottom:12px;">Notification Data Structures</h3>
+    <div class="grid-2">
+      <div class="card">
+        <h3>FOneSignalNotification</h3>
+        <ul class="param-list" style="margin-top:8px;">
+          <li><span class="pname">Title</span> <span class="ptype">FString</span></li>
+          <li><span class="pname">Body</span> <span class="ptype">FString</span></li>
+          <li><span class="pname">NotificationId</span> <span class="ptype">FString</span></li>
+          <li><span class="pname">LargeIconUrl</span> <span class="ptype">FString</span></li>
+          <li><span class="pname">AdditionalData</span> <span class="ptype">TMap&lt;FString,FString&gt;</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>FOneSignalNotificationAction</h3>
+        <ul class="param-list" style="margin-top:8px;">
+          <li><span class="pname">Notification</span> <span class="ptype">FOneSignalNotification</span></li>
+          <li><span class="pname">ActionId</span> <span class="ptype">FString</span> — empty = default tap</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ SETUP GUIDE -->
+  <section>
+    <div class="section-label">Setup Guide</div>
+    <h2>Getting Started in 4 Steps</h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Install the Plugin</h3>
+          <p>Copy the <code>OneSignalPro</code> folder into your project's <code>Plugins/</code> directory. Regenerate project files and enable the plugin in <em>Edit → Plugins → Developer Tools → OneSignalPro</em>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Enter Your App ID</h3>
+          <p>Open <em>Edit → Project Settings → Plugins → OneSignal</em>. Paste your OneSignal App ID and enable <strong>Auto-Initialize on Startup</strong>. Optionally enable debug logs.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Bind Events in Blueprint</h3>
+          <p>In your GameMode, PlayerController, or any Blueprint — add <strong>Event BeginPlay</strong> → <strong>Get OneSignal Manager</strong> → drag off and bind <strong>On Notification Received</strong> and <strong>On Notification Opened</strong>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>iOS Only: Request Permission</h3>
+          <p>On iOS you must prompt the user before notifications can be delivered. Call <strong>Prompt For Push Permissions</strong> once (e.g. on first launch or after a tutorial). On Android this is automatic.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ CODE EXAMPLE -->
+  <section>
+    <div class="section-label">Code Example</div>
+    <h2>C++ Usage (Optional)</h2>
+    <p>Access the subsystem from C++ the standard UE4 way:</p>
+    <pre><span class="cmt">// Get the subsystem (valid after GameInstance starts)</span>
+<span class="cls">UOneSignalManager</span>* Manager = <span class="cls">UGameInstance</span>::<span class="fn">GetSubsystem</span>&lt;<span class="cls">UOneSignalManager</span>&gt;();
+
+<span class="kw">if</span> (Manager &amp;&amp; Manager-&gt;<span class="fn">IsInitialized</span>())
+{
+    <span class="cmt">// Tag the device</span>
+    Manager-&gt;<span class="fn">SendTag</span>(<span class="str">TEXT("level")</span>, <span class="str">TEXT("5")</span>);
+
+    <span class="cmt">// Link to your backend user</span>
+    Manager-&gt;<span class="fn">SetExternalUserId</span>(<span class="str">TEXT("user-123")</span>);
+
+    <span class="cmt">// Bind notification event</span>
+    Manager-&gt;OnNotificationReceived.<span class="fn">AddDynamic</span>(<span class="kw">this</span>,
+        &amp;<span class="cls">AMyGameMode</span>::<span class="fn">HandlePushNotification</span>);
+}</pre>
+
+    <pre><span class="cmt">// Or use the static BP Library from C++</span>
+<span class="cls">UOneSignalProBPLibrary</span>::<span class="fn">SendTag</span>(WorldContext, <span class="str">TEXT("vip")</span>, <span class="str">TEXT("true")</span>);
+<span class="cls">UOneSignalProBPLibrary</span>::<span class="fn">SetSubscription</span>(WorldContext, <span class="kw">true</span>);</pre>
+
+    <h3 style="margin-top:24px; margin-bottom:10px;">DefaultEngine.ini Configuration</h3>
+    <pre><span class="cmt">[/Script/OneSignalPro.OneSignalSettings]</span>
+<span class="kw">AppId</span>=<span class="str">xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</span>
+<span class="kw">bEnableDebugLogs</span>=<span class="num">False</span>
+<span class="kw">bAutoInitialize</span>=<span class="num">True</span></pre>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ TECHNICAL REQUIREMENTS -->
+  <section>
+    <div class="section-label">Technical Requirements</div>
+    <h2>Requirements &amp; Compatibility</h2>
+
+    <div class="req-box">
+      <div class="req-row">
+        <span class="label">Unreal Engine Version</span>
+        <span class="value">4.27 or newer</span>
+      </div>
+      <div class="req-row">
+        <span class="label">Plugin Version</span>
+        <span class="value">1.0.0</span>
+      </div>
+      <div class="req-row">
+        <span class="label">Plugin Type</span>
+        <span class="value">Runtime · LoadingPhase: PreLoadingScreen</span>
+      </div>
+      <div class="req-row">
+        <span class="label">Android SDK</span>
+        <span class="value">OneSignal Android SDK 4.x (Gradle auto-resolved)</span>
+      </div>
+      <div class="req-row">
+        <span class="label">iOS SDK</span>
+        <span class="value">OneSignal iOS SDK 3.x (CocoaPod auto-resolved)</span>
+      </div>
+      <div class="req-row">
+        <span class="label">Android Min API</span>
+        <span class="value">API 21 (Android 5.0 Lollipop)</span>
+      </div>
+      <div class="req-row">
+        <span class="label">iOS Min Version</span>
+        <span class="value">iOS 11.0</span>
+      </div>
+      <div class="req-row">
+        <span class="label">Android Permissions (auto-added)</span>
+        <span class="value">WAKE_LOCK · VIBRATE · RECEIVE_BOOT_COMPLETED · ACCESS_NETWORK_STATE</span>
+      </div>
+      <div class="req-row">
+        <span class="label">iOS Entitlements (auto-added)</span>
+        <span class="value">Push Notifications · Background Modes (remote-notification)</span>
+      </div>
+      <div class="req-row">
+        <span class="label">Engine Source Modification</span>
+        <span class="value">None — drop-in plugin only</span>
+      </div>
+      <div class="req-row">
+        <span class="label">OneSignal Account</span>
+        <span class="value">Required (free tier available at onesignal.com)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ FILE STRUCTURE -->
+  <section>
+    <div class="section-label">File Structure</div>
+    <h2>Plugin Source Layout</h2>
+    <pre>Plugins/OneSignalPro/
+<span class="kw">├──</span> OneSignalPro.uplugin
+<span class="kw">├──</span> Resources/                         <span class="cmt"># Icon assets</span>
+<span class="kw">└──</span> Source/OneSignalPro/
+    <span class="kw">├──</span> OneSignalPro.Build.cs            <span class="cmt"># Module build rules + platform deps</span>
+    <span class="kw">├──</span> OneSignalPro_APL.xml             <span class="cmt"># Android: Gradle, Manifest, Java injection</span>
+    <span class="kw">├──</span> OneSignalPro_iOS_APL.xml         <span class="cmt"># iOS: plist, CocoaPod integration</span>
+    <span class="kw">├──</span> Public/
+    <span class="kw">│   ├──</span> OneSignalTypes.h             <span class="cmt"># FOneSignalNotification, FOneSignalNotificationAction</span>
+    <span class="kw">│   ├──</span> IOneSignalPlatform.h         <span class="cmt"># Abstract interface + native delegates</span>
+    <span class="kw">│   ├──</span> OneSignalSettings.h          <span class="cmt"># UDeveloperSettings (AppId, debug, auto-init)</span>
+    <span class="kw">│   ├──</span> OneSignalManager.h           <span class="cmt"># UGameInstanceSubsystem (main API)</span>
+    <span class="kw">│   ├──</span> OneSignalProBPLibrary.h      <span class="cmt"># Static Blueprint wrapper</span>
+    <span class="kw">│   └──</span> OneSignalPro.h               <span class="cmt"># Module class + LogOneSignal category</span>
+    <span class="kw">└──</span> Private/
+        <span class="kw">├──</span> OneSignalManager.cpp         <span class="cmt"># Platform selection + subsystem lifecycle</span>
+        <span class="kw">├──</span> OneSignalPro.cpp             <span class="cmt"># IMPLEMENT_MODULE</span>
+        <span class="kw">├──</span> Android/
+        <span class="kw">│   └──</span> OneSignalAndroid.cpp     <span class="cmt"># JNI bridge (C++ ↔ Java ↔ OneSignal SDK)</span>
+        <span class="kw">├──</span> IOS/
+        <span class="kw">│   └──</span> OneSignalIOS.mm          <span class="cmt"># Objective-C++ wrapper</span>
+        <span class="kw">└──</span> Default/
+            <span class="kw">└──</span> OneSignalDefault.h      <span class="cmt"># Null stub (editor + desktop)</span></pre>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ SUPPORT -->
+  <section>
+    <div class="section-label">Support</div>
+    <h2>Support &amp; Contact</h2>
+    <div class="grid-2">
+      <div class="card">
+        <span class="card-icon">📖</span>
+        <h3>Documentation</h3>
+        <p>Full setup guide, Blueprint examples, and C++ API reference included in the plugin package.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🐛</span>
+        <h3>Issue Reporting</h3>
+        <p>Submit issues and feature requests via the FAB product page or the creator's support channel.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🌐</span>
+        <h3>Creator</h3>
+        <p>Alpha XP — <a href="https://alpha-xp5-ai.github.io">alpha-xp5-ai.github.io</a></p>
+      </div>
+      <div class="card">
+        <span class="card-icon">💬</span>
+        <h3>OneSignal Docs</h3>
+        <p>For OneSignal dashboard setup, segmentation, and REST API: <a href="https://documentation.onesignal.com">documentation.onesignal.com</a></p>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /page -->
+
+<!-- ═══════════════════════════════════════════ FOOTER -->
+<footer>
+  <strong>OneSignalPro</strong> v1.0.0 &nbsp;·&nbsp; Created by <strong>Alpha XP</strong> &nbsp;·&nbsp;
+  Unreal Engine 4 Plugin &nbsp;·&nbsp; Android &amp; iOS Push Notifications via OneSignal<br />
+  <span style="margin-top:8px; display:block;">
+    Listed on <strong>FAB — Epic Games Marketplace</strong>
+  </span>
+</footer>
+
+</body>
+</html>
