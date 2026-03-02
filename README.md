@@ -1,210 +1,376 @@
-# OneSignalPro — UE4 Plugin
+# OneSignalPro — Unreal Engine 4 Plugin
 
-> Copyright 2026 Alpha XP. All Rights Reserved.
+> Production-ready OneSignal push notification integration for Android & iOS.
+> Full Blueprint support · Zero boilerplate · Drop-in plugin.
 
-Production-ready OneSignal push notification integration for Unreal Engine 4 (Android & iOS).
-
-- **Fab Marketplace:** `com.epicgames.launcher://ue/Fab/product/f43d88a0-e5db-48f0-9110-2a1d6f1ddcff`
-- **Docs / Support:** https://alpha-xp5-ai.github.io/OneSignalPro/
-- **Source:** https://github.com/Alpha-xp5-ai/OneSignalPro
+**Version:** 1.0.0 &nbsp;|&nbsp; **Engine:** UE 4.27+ &nbsp;|&nbsp; **Platforms:** Android · iOS &nbsp;|&nbsp; **Author:** Alpha XP
 
 ---
 
-## Requirements
+## Table of Contents
 
-| Item | Version |
-|------|---------|
-| Unreal Engine | 4.27+ |
-| Target platforms | Android, iOS |
-| OneSignal Android SDK | 4.x (added automatically via Gradle) |
-| OneSignal iOS SDK | 3.x (added automatically via CocoaPods) |
-| OneSignal account | Free — https://onesignal.com |
-
----
-
-## Installation
-
-1. Copy the `OneSignalPro` folder into your project's `Plugins/` directory.
-2. Reopen the project — UE4 will prompt you to rebuild the plugin. Click **Yes**.
-3. Enable the plugin in **Edit → Plugins → Developer Tools → OneSignalPro** (enabled by default after copying).
+1. [Overview](#overview)
+2. [Features](#features)
+3. [Platform Support](#platform-support)
+4. [Architecture](#architecture)
+5. [Blueprint API Reference](#blueprint-api-reference)
+6. [Events & Delegates](#events--delegates)
+7. [Data Structures](#data-structures)
+8. [Setup Guide](#setup-guide)
+9. [Project Settings](#project-settings)
+10. [C++ Usage](#c-usage)
+11. [File Structure](#file-structure)
+12. [Technical Requirements](#technical-requirements)
+13. [Support](#support)
 
 ---
 
-## Quick Setup (2 steps)
+## Overview
 
-### Step 1 — Enter your App ID
+**OneSignalPro** is a production-grade UE4 plugin that integrates [OneSignal](https://onesignal.com) push notification services into your mobile game. It handles all platform complexity — Android JNI bridges, iOS Objective-C++ wrappers, Gradle dependencies, CocoaPods, and manifest permissions — so you focus on your game logic.
 
-Open **Edit → Project Settings → Plugins → OneSignal** and paste your OneSignal App ID.
+- Clean layered architecture (Subsystem → Interface → Platform impl)
+- All features accessible from **Blueprint with no C++ required**
+- **Auto-Initialize** mode: set App ID in Project Settings and the SDK starts automatically
+- All callbacks safely dispatched to the **game thread**
 
-> Find your App ID in the OneSignal dashboard: **Settings → Keys & IDs → OneSignal App ID**
+---
 
-```ini
-; DefaultEngine.ini (written automatically by the Project Settings UI)
-[/Script/OneSignalPro.OneSignalSettings]
-AppId=YOUR_APP_ID_HERE
-bEnableDebugLogs=False
-bAutoInitialize=True
+## Features
+
+### Core Notifications
+- Initialize OneSignal with App ID
+- Auto-initialize on game start (zero Blueprint code needed)
+- Receive foreground push notifications
+- Handle notification-opened events (user tap from background/killed state)
+- Player ID received callback
+- Enable / disable push subscription per device
+- Prompt for push permissions (iOS OS dialog)
+
+### Device Segmentation — Tags
+- Send a single key/value tag
+- Send multiple tags in one call (`TMap<FString, FString>`)
+- Delete a tag by key
+- Link device to your backend user via External User ID
+- Remove External User ID
+
+### Blueprint Events (Delegates)
+- `OnNotificationReceived` — foreground notification arrived
+- `OnNotificationOpened` — user tapped a notification
+- `OnPlayerIdReceived` — device Player ID is available
+- All events fire on the game thread (safe to use with UObjects)
+
+### Developer Experience
+- Project Settings UI via `UDeveloperSettings`
+- Verbose debug logging toggle (`bEnableDebugLogs`)
+- Dedicated log category: `LogOneSignal`
+- No engine source modifications required
+- Compatible with packaged **Shipping** builds
+- Works in Editor without any platform SDK (null stub)
+- Subsystem auto-created/destroyed with the Game Instance
+
+---
+
+## Platform Support
+
+| Platform | Status | SDK |
+|----------|--------|-----|
+| Android | ✅ Full implementation | OneSignal Android SDK 4.x (Gradle) |
+| iOS | ✅ Full implementation | OneSignal iOS SDK 3.x (CocoaPod) |
+| Win64 | ⬜ Compiles (null stub) | — |
+| Mac | ⬜ Compiles (null stub) | — |
+| Linux | ⬜ Compiles (null stub) | — |
+
+> The null stub lets the plugin compile cleanly in the Editor on any desktop platform. All push APIs are no-ops outside Android/iOS.
+
+---
+
+## Architecture
+
+```
+Blueprint / C++ user code
+        │
+        ▼
+UOneSignalProBPLibrary      ← thin static Blueprint wrappers (stateless)
+        │
+        ▼
+UOneSignalManager           ← UGameInstanceSubsystem (owns state + delegates)
+        │
+        ▼
+IOneSignalPlatform          ← abstract C++ interface
+   ┌────┴──────────────────┬─────────────────┐
+   ▼                       ▼                 ▼
+FOneSignalAndroid     FOneSignalIOS     FOneSignalDefault
+ (JNI bridge)        (Obj-C++ bridge)   (null stub)
 ```
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `AppId` | _(empty)_ | Your OneSignal Application ID |
-| `bAutoInitialize` | `true` | Initialize the SDK automatically when the game starts |
-| `bEnableDebugLogs` | `false` | Enable verbose SDK logging (development only) |
-
-### Step 2 — (Optional) Listen for events in Blueprint
-
-If `bAutoInitialize` is **true** and `AppId` is set, no Blueprint code is required — the SDK initializes itself.
-
-To react to incoming notifications, bind to the subsystem delegates:
+### Android Data Flow
 
 ```
-[Begin Play]
-    → Get Game Instance
-    → Get Subsystem (OneSignal Manager)
-    → Bind Event to On Notification Received
-    → Bind Event to On Notification Opened
-    → Bind Event to On Player ID Received
+OneSignal Cloud → FCM → Android OS
+                           │
+               Java foreground handler (GameActivity)
+                           │  nativeOnNotificationReceived(title, body, id)
+               AsyncTask → GameThread
+                           │
+               FOneSignalAndroid::OnJavaNotificationReceived()
+                           │  broadcasts native delegate
+               UOneSignalManager::HandleNotificationReceived()
+                           │  broadcasts BP delegate
+               OnNotificationReceived  ← Blueprint event fires
+```
+
+### iOS Data Flow
+
+```
+OneSignal Cloud → APNs → iOS OS
+                            │
+              OneSignal SDK handler (CocoaPod 3.x)
+                            │  dispatch_get_main_queue()
+              Obj-C++ OSNotification handler
+                            │
+              AsyncTask → GameThread
+                            │
+              UOneSignalManager::HandleNotificationOpened()
+                            │
+              OnNotificationOpened  ← Blueprint event fires
 ```
 
 ---
 
-## API Reference
+## Blueprint API Reference
 
-All functions are available in Blueprint under the **OneSignal** category, and in C++ via `UOneSignalManager` or `UOneSignalProBPLibrary`.
+### Category: `OneSignal`
 
-### Initialization
+| Node | Type | Description | Inputs |
+|------|------|-------------|--------|
+| **Initialize OneSignal** | Callable | Start the SDK. Skip if Auto-Initialize is on. | `AppId` (String), `bEnableDebug` (bool) |
+| **Get OneSignal Manager** | Callable | Returns the subsystem instance. Use to bind events. | — |
+| **Is Initialized** | Pure | Returns `true` after a successful Initialize. | — |
 
-| Blueprint Node | C++ Method | Description |
-|----------------|-----------|-------------|
-| Initialize OneSignal | `InitializeOneSignal(AppId, bEnableDebug)` | Start the SDK. Skip if Auto-Initialize is on. |
-| Is OneSignal Initialized | `IsInitialized()` | Returns `true` after a successful init. |
+### Category: `OneSignal\|User`
 
-### Tagging (Segmentation)
+| Node | Type | Description | Inputs |
+|------|------|-------------|--------|
+| **Get Player ID** | Pure | OneSignal device Player ID. Empty if not yet available. | — |
+| **Set External User ID** | Callable | Link this device to your backend user. | `ExternalId` (String) |
+| **Remove External User ID** | Callable | Clear the external user ID. | — |
 
-| Blueprint Node | C++ Method | Description |
-|----------------|-----------|-------------|
-| Send Tag | `SendTag(Key, Value)` | Attach a single key/value tag to this device. |
-| Send Tags | `SendTags(TMap<FString,FString>)` | Attach multiple tags in one call. |
-| Delete Tag | `DeleteTag(Key)` | Remove a previously set tag. |
+### Category: `OneSignal\|Tags`
 
-### User Identity
+| Node | Type | Description | Inputs |
+|------|------|-------------|--------|
+| **Send Tag** | Callable | Tag device with a single key/value pair. | `Key` (String), `Value` (String) |
+| **Send Tags** | Callable | Send multiple tags in one call. | `Tags` (Map String→String) |
+| **Delete Tag** | Callable | Remove a previously sent tag. | `Key` (String) |
 
-| Blueprint Node | C++ Method | Description |
-|----------------|-----------|-------------|
-| Set External User ID | `SetExternalUserId(Id)` | Link device to your own user ID (e.g. account ID). |
-| Remove External User ID | `RemoveExternalUserId()` | Unlink the external user ID. |
-| Get Player ID | `GetPlayerId()` | Returns the OneSignal device/player ID. Empty until the SDK registers. |
+### Category: `OneSignal\|Permissions`
 
-### Permissions & Subscription
+| Node | Type | Description | Inputs |
+|------|------|-------------|--------|
+| **Prompt For Push Permissions** | Callable | Show the OS permission dialog. Required on iOS. No-op on Android. | — |
 
-| Blueprint Node | C++ Method | Description |
-|----------------|-----------|-------------|
-| Prompt For Push Permissions | `PromptForPushPermissions()` | Show the OS permission dialog. **Required on iOS** before notifications can arrive. No-op on Android. |
-| Set Subscription | `SetSubscription(bSubscribed)` | Opt the device in (`true`) or out (`false`) of push notifications. |
+### Category: `OneSignal\|Subscription`
 
-### Events (Blueprint Delegates)
+| Node | Type | Description | Inputs |
+|------|------|-------------|--------|
+| **Set Subscription** | Callable | Enable or disable push delivery for this device. | `bSubscribed` (bool) |
 
-Bind these on the `UOneSignalManager` subsystem:
+---
 
-| Delegate | Parameters | Fired when |
-|----------|-----------|-----------|
-| `OnNotificationReceived` | `FOneSignalNotification` | A notification arrives while the app is **foreground**. |
-| `OnNotificationOpened` | `FOneSignalNotificationAction` | The user **taps** a notification to open the app. |
-| `OnPlayerIdReceived` | `FString PlayerId` | The OneSignal Player ID becomes available after init. |
+## Events & Delegates
 
-#### FOneSignalNotification fields
+Bind these via **Get OneSignal Manager → Assign Event** in Blueprint.
+
+### `OnNotificationReceived`
+Fired when a push notification arrives while the app is in the **foreground**.
+
+```
+Signature: (const FOneSignalNotification& Notification)
+```
+
+### `OnNotificationOpened`
+Fired when the user **taps a push notification** to open the app.
+
+```
+Signature: (const FOneSignalNotificationAction& Action)
+```
+
+### `OnPlayerIdReceived`
+Fired once the OneSignal **Player ID** becomes available after initialization.
+
+```
+Signature: (const FString& PlayerId)
+```
+
+---
+
+## Data Structures
+
+### `FOneSignalNotification`
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `Title` | `FString` | Notification title |
-| `Body` | `FString` | Notification message body |
+| `Body` | `FString` | Notification body / message text |
 | `NotificationId` | `FString` | Unique OneSignal notification ID |
-| `LargeIconUrl` | `FString` | URL of the large icon (Android) |
-| `AdditionalData` | `TMap<FString,FString>` | Custom key-value payload sent with the notification |
+| `LargeIconUrl` | `FString` | Large icon URL attached to the notification |
+| `AdditionalData` | `TMap<FString,FString>` | Custom key-value pairs sent with the notification |
 
-#### FOneSignalNotificationAction fields
+### `FOneSignalNotificationAction`
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `Notification` | `FOneSignalNotification` | The notification that was tapped |
-| `ActionId` | `FString` | ID of the action button pressed; empty string = default tap |
+| `Notification` | `FOneSignalNotification` | The notification that was interacted with |
+| `ActionId` | `FString` | Action button ID pressed. Empty string = default tap. |
+
+---
+
+## Setup Guide
+
+### Option A — Zero Code (Recommended)
+
+1. Copy `OneSignalPro/` into your project's `Plugins/` folder
+2. Regenerate project files and enable the plugin: **Edit → Plugins → Developer Tools → OneSignalPro**
+3. Open **Edit → Project Settings → Plugins → OneSignal**
+4. Paste your **OneSignal App ID** and enable **Auto-Initialize on Startup**
+5. In your GameMode or PlayerController Blueprint:
+   - Add **Event BeginPlay**
+   - **Get OneSignal Manager**
+   - Drag off → **Assign On Notification Received** → implement your logic
+   - Drag off → **Assign On Notification Opened** → implement your logic
+6. **iOS only:** Call **Prompt For Push Permissions** once (e.g. after tutorial)
+
+### Option B — Manual Init from Blueprint
+
+```
+Event BeginPlay
+    └─► Initialize OneSignal (AppId = "your-app-id")
+            └─► Get OneSignal Manager
+                    ├─► Assign On Notification Received
+                    └─► Assign On Notification Opened
+```
+
+---
+
+## Project Settings
+
+Configure via **Edit → Project Settings → Plugins → OneSignal** or directly in `DefaultEngine.ini`:
+
+```ini
+[/Script/OneSignalPro.OneSignalSettings]
+AppId=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+bEnableDebugLogs=False
+bAutoInitialize=True
+```
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `AppId` | String | `""` | Your OneSignal application ID |
+| `bEnableDebugLogs` | bool | `false` | Enable verbose SDK logging |
+| `bAutoInitialize` | bool | `true` | Initialize SDK automatically on game start |
 
 ---
 
 ## C++ Usage
 
-### Get the subsystem
+### Access the Subsystem
 
 ```cpp
 #include "OneSignalManager.h"
 
-// From any UObject with a world context (Actor, Widget, GameMode, etc.)
-UOneSignalManager* OS = UOneSignalManager::GetInstance(this);
-if (OS)
+// From any UObject with a world context
+UOneSignalManager* Manager = UGameInstance::GetSubsystem<UOneSignalManager>();
+
+if (Manager && Manager->IsInitialized())
 {
-    OS->InitializeOneSignal(TEXT("YOUR_APP_ID"), false);
+    // Tag the device
+    Manager->SendTag(TEXT("level"), TEXT("5"));
+
+    // Link to your backend user
+    Manager->SetExternalUserId(TEXT("user-123"));
+
+    // Bind notification event
+    Manager->OnNotificationReceived.AddDynamic(
+        this, &AMyGameMode::HandlePushNotification);
 }
 ```
 
-### Bind to delegates in C++
+### Use the Static Blueprint Library from C++
 
 ```cpp
-UOneSignalManager* OS = UOneSignalManager::GetInstance(this);
-if (OS)
-{
-    OS->OnNotificationReceived.AddDynamic(
-        this, &AMyActor::HandleNotification);
-    OS->OnPlayerIdReceived.AddDynamic(
-        this, &AMyActor::HandlePlayerId);
-}
+#include "OneSignalProBPLibrary.h"
 
-void AMyActor::HandleNotification(const FOneSignalNotification& N)
-{
-    UE_LOG(LogTemp, Log, TEXT("Push received: %s — %s"), *N.Title, *N.Body);
-}
+// Works from any UObject — no subsystem reference needed
+UOneSignalProBPLibrary::SendTag(this, TEXT("vip"), TEXT("true"));
+UOneSignalProBPLibrary::SetSubscription(this, true);
+FString PlayerId = UOneSignalProBPLibrary::GetPlayerId(this);
+```
 
-void AMyActor::HandlePlayerId(const FString& PlayerId)
-{
-    UE_LOG(LogTemp, Log, TEXT("OneSignal Player ID: %s"), *PlayerId);
-}
+### Static Getter Helper
+
+```cpp
+// Convenience static getter
+UOneSignalManager* Manager = UOneSignalManager::GetInstance(this);
 ```
 
 ---
 
-## Platform Notes
+## File Structure
 
-### Android
-
-- Push permissions are granted at install time — no runtime prompt needed.
-- The OneSignal SDK 4.x Gradle dependency is injected automatically via `OneSignalPro_APL.xml`.
-- Required manifest permissions (`INTERNET`, `RECEIVE_BOOT_COMPLETED`, `VIBRATE`) are merged in automatically.
-
-### iOS
-
-- You **must** call **Prompt For Push Permissions** before notifications will appear.
-  - Best practice: call it after a brief onboarding screen, not immediately at first launch.
-- The OneSignal iOS SDK 3.x CocoaPod is added automatically via `OneSignalPro_iOS_APL.xml`.
-- Ensure **Push Notifications** and **Background Modes → Remote notifications** capabilities are enabled in Xcode.
-
-### Editor / Desktop (Win64, Mac, Linux)
-
-The plugin compiles and loads cleanly on non-mobile platforms via a null stub — all API calls are no-ops. This lets you iterate in PIE without errors or special build flags.
-
----
-
-## Troubleshooting
-
-| Symptom | Fix |
-|---------|-----|
-| Notifications not received on Android | Verify `AppId` in Project Settings. Run `adb logcat \| grep OneSignal`. Enable debug logs temporarily. |
-| Notifications not received on iOS | Confirm you called **Prompt For Push Permissions** and the user accepted. Verify push capability in Xcode. |
-| Player ID is empty | The ID arrives asynchronously — bind to `OnPlayerIdReceived` instead of reading it immediately after init. |
-| SDK not initializing | Ensure `bAutoInitialize=true` and `AppId` is non-empty, or call **Initialize OneSignal** manually in Blueprint. |
-| `C2065: 'GEngine': undeclared identifier` | Ensure `#include "Engine/Engine.h"` is present in the file that uses `GEngine`. |
+```
+Plugins/OneSignalPro/
+├── OneSignalPro.uplugin
+├── Resources/                          # Icon assets
+└── Source/OneSignalPro/
+    ├── OneSignalPro.Build.cs           # Module build rules + platform dependencies
+    ├── OneSignalPro_APL.xml            # Android: Gradle dep, Manifest, Java injection
+    ├── OneSignalPro_iOS_APL.xml        # iOS: plist entries, CocoaPod integration
+    ├── Public/
+    │   ├── OneSignalTypes.h            # FOneSignalNotification, FOneSignalNotificationAction
+    │   ├── IOneSignalPlatform.h        # Abstract interface + native delegates
+    │   ├── OneSignalSettings.h         # UDeveloperSettings (AppId, debug, auto-init)
+    │   ├── OneSignalManager.h          # UGameInstanceSubsystem — main API
+    │   ├── OneSignalProBPLibrary.h     # Static Blueprint wrapper
+    │   └── OneSignalPro.h              # Module class + LogOneSignal log category
+    └── Private/
+        ├── OneSignalManager.cpp        # Platform selection + subsystem lifecycle
+        ├── OneSignalPro.cpp            # IMPLEMENT_MODULE
+        ├── Android/
+        │   └── OneSignalAndroid.cpp   # JNI bridge (C++ ↔ Java ↔ OneSignal SDK 4.x)
+        ├── IOS/
+        │   └── OneSignalIOS.mm        # Objective-C++ wrapper (OneSignal SDK 3.x)
+        └── Default/
+            └── OneSignalDefault.h     # Null stub for editor + desktop platforms
+```
 
 ---
 
-## License
+## Technical Requirements
 
-Copyright 2026 Alpha XP. All Rights Reserved.
+| Requirement | Value |
+|-------------|-------|
+| Unreal Engine | 4.27 or newer |
+| Plugin Version | 1.0.0 |
+| Module Type | Runtime |
+| Loading Phase | PreLoadingScreen |
+| Android SDK | OneSignal Android SDK 4.x (auto-resolved via Gradle) |
+| iOS SDK | OneSignal iOS SDK 3.x (auto-resolved via CocoaPod) |
+| Android Min API | API 21 (Android 5.0 Lollipop) |
+| iOS Min Version | iOS 11.0 |
+| Android Permissions | `WAKE_LOCK`, `VIBRATE`, `RECEIVE_BOOT_COMPLETED`, `ACCESS_NETWORK_STATE` |
+| iOS Entitlements | Push Notifications, Background Modes (remote-notification) |
+| Engine Source Modification | None — drop-in plugin only |
+| OneSignal Account | Required (free tier available at [onesignal.com](https://onesignal.com)) |
+
+---
+
+## Support
+
+- **Creator:** Alpha XP — [alpha-xp5-ai.github.io](https://github.com/Alpha-xp5-ai)
+- **OneSignal Documentation:** [documentation.onesignal.com](https://documentation.onesignal.com)
+- **Issues / Feature Requests:** Submit via the FAB product page
+
+---
+
+*OneSignalPro v1.0.0 · Created by Alpha XP · Unreal Engine 4 Plugin · Android & iOS Push Notifications*
